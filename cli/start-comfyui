@@ -1,0 +1,45 @@
+#!/bin/bash
+# start-comfyui — 启动 ComfyUI（用于 MiniMax 官方 API 节点）
+# 界面: http://127.0.0.1:8188
+#
+# 只做两件事：
+#   1) ComfyUI 本体（生态层）
+#   2) 官方 API 节点：MinimaxHailuo03ContextIRNode / MinimaxHailuo03RegenerateNode
+#      （需要 Comfy 账户额度；key 放在 .comfy_api_key 或环境变量 COMFY_API_KEY）
+#
+# 配套 CLI：./comfy-contextir（提示词增强）  ./comfy-2k（768P→2K 再生成）
+
+set -euo pipefail
+ROOT="${H3_ROOT:-$HOME/minimax-h3}"
+export PATH="$ROOT/bin:$PATH"
+
+if [ ! -x "$ROOT/ComfyUI/.venv/bin/python" ]; then
+  echo "❌ ComfyUI 环境缺失" >&2; exit 1
+fi
+
+# 把本地产出的 MP4 软链接进 input/，供 LoadVideo 选择
+mkdir -p "$ROOT/ComfyUI/input"
+# 注意：ComfyUI 的 LoadVideo 做真实路径包含检查，软链接会被拒 → 用硬链接
+for f in "$ROOT"/h3.c/outputs/*.mp4; do
+  [ -e "$f" ] || continue
+  b=$(basename "$f")
+  dst="$ROOT/ComfyUI/input/$b"
+  [ -e "$dst" ] && continue
+  ln "$f" "$dst" 2>/dev/null || cp -n "$f" "$dst" 2>/dev/null || true
+done
+
+echo "──────────────────────────────────────────────"
+echo " ComfyUI         http://127.0.0.1:8188"
+echo " API 节点        Context-IR 提示词增强 / 2K 再生成"
+echo " CLI 工具        ./comfy-contextir    ./comfy-2k"
+if [ -s "$ROOT/.comfy_api_key" ]; then
+  echo " API Key         已配置（.comfy_api_key）"
+else
+  echo " API Key         ⚠️ 未配置 —— 到 https://platform.comfy.org/login 生成后"
+  echo "                 写入 $ROOT/.comfy_api_key"
+fi
+echo " 停止            Ctrl+C"
+echo "──────────────────────────────────────────────"
+
+cd "$ROOT/ComfyUI"
+exec ./.venv/bin/python main.py --use-pytorch-cross-attention --listen 127.0.0.1 --port 8188

@@ -1,0 +1,26 @@
+h3 profile: Qwen text encoder total wall= 9.489s encode= 0.004s wait= 6.230s root-gpu= 2.224s peak= 2.729GiB alloc= 46.865GiB submissions=51 direct=801 linear=0 conv=0 attention=0
+h3 profile: H3 DiT load wall= 9.709s encode= 0.093s wait= 2.160s root-gpu= 1.181s peak= 3.470GiB alloc= 29.355GiB submissions=55 direct=31 linear=53 conv=0 attention=2
+h3 profile: H3 DiT Euler denoise wall=2224.886s encode= 1.311s wait=2223.497s root-gpu= 1.510s peak= 3.470GiB alloc= 0.000GiB submissions=506 direct=1595 linear=1980 conv=0 attention=495
+h3 profile: H3 DiT total wall=2234.692s encode= 1.404s wait=2225.657s root-gpu= 2.691s peak= 3.470GiB alloc= 29.355GiB submissions=561 direct=1626 linear=2033 conv=0 attention=497
+h3 profile: audio VAE decoder total wall= 1.435s encode= 0.823s wait= 0.487s root-gpu= 0.455s peak= 0.283GiB alloc= 0.815GiB submissions=16 direct=340 linear=0 conv=136 attention=0
+h3 profile: video VAE decoder total wall= 107.571s encode= 0.596s wait= 103.823s root-gpu= 1.059s peak= 9.408GiB alloc= 9.418GiB submissions=56 direct=12264 linear=8120 conv=0 attention=2016
+     2354.40 real         5.64 user       129.40 sys
+         11510759424  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+             5643740  page reclaims
+                1070  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                6584  voluntary context switches
+              427900  involuntary context switches
+        502626820510  instructions retired
+        402238465673  cycles elapsed
+         11166251584  peak memory footprint
+退出码=0
+结束: 12:44:26

@@ -1,0 +1,36 @@
+#!/bin/bash
+# h3studio — 启动 H3 Studio 图形界面（h3.c-studio）
+# 前端: http://127.0.0.1:3000   后端: http://127.0.0.1:8765
+#
+# 本机适配说明（32GB M1 Max）：
+#   已给 studio/server/main.py 打过补丁，生成时强制附加 --ssd-streaming
+#   （本机 max Metal buffer 仅 18.7 GiB，DiT 满驻留需 37-45 GiB，不加会分配失败）
+#   可用 H3_SSD_STREAMING=0 临时关闭。
+
+set -euo pipefail
+
+ROOT="${H3_ROOT:-$HOME/minimax-h3}"
+STUDIO="$ROOT/h3.c-studio/studio"
+export PATH="$ROOT/bin:$PATH"                 # arm64 ffmpeg/ffprobe
+export H3_ENGINE_DIR="$ROOT/h3.c-studio"      # 引擎与模型目录
+export H3_SSD_STREAMING="${H3_SSD_STREAMING:-1}"
+
+if [ ! -x "$STUDIO/server/.venv/bin/python" ]; then
+  echo "❌ 后端环境缺失，请先执行：" >&2
+  echo "   cd $STUDIO/server && /opt/homebrew/bin/python3.12 -m venv .venv && \\" >&2
+  echo "   ./.venv/bin/pip install fastapi 'uvicorn[standard]' pydantic python-multipart" >&2
+  exit 1
+fi
+
+echo "──────────────────────────────────────────────"
+echo " H3 Studio"
+echo " 前端      http://127.0.0.1:3000"
+echo " 后端      http://127.0.0.1:8765  (API 文档 /docs)"
+echo " 引擎      $ROOT/h3.c-studio/h3"
+echo " 模型      MiniMax-H3（原始） / MiniMax-H3-turbo（已折叠 Turbo）"
+echo " SSD 流式  $H3_SSD_STREAMING  (1=开，本机必须)"
+echo " 停止      Ctrl+C"
+echo "──────────────────────────────────────────────"
+
+cd "$STUDIO"
+exec npm run dev -- --host 127.0.0.1 --port 3000

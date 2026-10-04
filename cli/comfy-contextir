@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""comfy-contextir — 用 MiniMax H3 Context-IR（官方 API）把粗略想法增强为结构化视频提示词。
+
+用法:
+  ./comfy-contextir "一个赛博朋克城市夜景" [--duration 5] [--ratio 16:9]
+输出: 增强后的提示词（stdout，可直接喂给 h3gen）
+"""
+import argparse, sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
+import comfy_lib as C
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("prompt", help="粗略描述（中文或英文均可）")
+    ap.add_argument("--duration", type=int, default=5, help="计划生成的时长 4-15 秒")
+    ap.add_argument("--ratio", default="16:9",
+                    choices=["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"])
+    ap.add_argument("--timeout", type=int, default=900, help="等待超时（秒）")
+    args = ap.parse_args()
+
+    C.require_key()
+    graph = {
+        "1": {"class_type": "MinimaxHailuo03ContextIRNode",
+              "inputs": {"model": "MiniMax H3",
+                         "model.prompt": args.prompt,
+                         "model.duration": args.duration,
+                         "model.ratio": args.ratio}},
+        "2": {"class_type": "SaveText",
+              "inputs": {"text": ["1", 0], "filename_prefix": "contextir", "format": "txt"}},
+    }
+    print("⏳ 调用 Context-IR（官方 API，约 $0.02/次）...", file=sys.stderr, flush=True)
+    entry = C.run_graph(graph, timeout=args.timeout, label="Context-IR")
+
+    # SaveText 的输出是「字符串列表」，不是文件字典 —— 优先直接取文本
+    text = ""
+    for _nid, out in (entry.get("outputs") or {}).items():
+        t = out.get("text")
+        if isinstance(t, list) and t and isinstance(t[0], str):
+            text = "\n".join(t).strip()
+            break
+    if not text:
+        for f in C.output_path(entry):
+            if f.suffix == ".txt":
+                text = f.read_text(encoding="utf-8", errors="ignore").strip()
+                break
+    if not text:
+        sys.exit(f"❌ 未取到增强文本；outputs={entry.get('outputs')}")
+
+    print(text)
+    print("\n（可直接使用，例如：./h3gen \"$(cat 上面内容)\" draft）", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

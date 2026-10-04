@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""comfy-2k — 用 MiniMax H3 Regenerate（官方 API）把本地 768P 成片再生成到 2K。
+
+官方硬性约束:
+  · 输入必须是**未修改**的 H3 768P 输出；24 FPS；时长 4–15 秒；2K 输入不接受
+  · prompt 必须是生成该片时用的**原始提示词**
+  · 原生成若用了首/尾帧或参考素材，需一并提供
+
+用法:
+  ./comfy-2k h3.c/outputs/bench-768p-124f.mp4 "原始提示词"
+  ./comfy-2k 视频.mp4 "提示词" --watermark
+"""
+import argparse, os, shutil, sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
+import comfy_lib as C
+
+COMFY_INPUT = C.ROOT / "ComfyUI" / "input"
+
+
+def stage_input(src: Path) -> str:
+    """ComfyUI 的 LoadVideo 会做真实路径包含检查，软链接指向目录外会被拒。
+    因此用硬链接（同卷零额外空间），失败则复制。"""
+    COMFY_INPUT.mkdir(parents=True, exist_ok=True)
+    dst = COMFY_INPUT / src.name
+    if dst.exists():
+        if dst.stat().st_ino == src.stat().st_ino:
+            return src.name
+        dst.unlink()
+    try:
+        os.link(src, dst)
+        print(f"🔗 已硬链接到 ComfyUI input: {src.name}", file=sys.stderr)
+    except OSError:
+        shutil.copy2(src, dst)
+        print(f"📋 已复制到 ComfyUI input: {src.name}", file=sys.stderr)
+    return src.name
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("video", help="本地产出的 768P MP4")
+    ap.add_argument("prompt", help="生成该视频时的原始提示词（必须完全一致）")
+    ap.add_argument("--watermark", action="store_true", help="加 AIGC 水印")
+    ap.add_argument("--prefix", default="h3-2k", help="输出文件名前缀")
+    ap.add_argument("--timeout", type=int, default=5400, help="等待超时（秒）")
+    args = ap.parse_args()
+
+    C.require_key()
+    src = Path(args.video).resolve()
+    if not src.exists():
+        sys.exit(f"❌ 找不到视频: {src}")
+    name = stage_input(src)
+
+    graph = {
+        "1": {"class_type": "LoadVideo", "inputs": {"file": name}},
+        "2": {"class_type": "MinimaxHailuo03RegenerateNode",
+              "inputs": {"model": "MiniMax H3",
+                         "model.prompt": args.prompt,
+                         "model.resolution": "2K",
+                         "video": ["1", 0],
+                         "watermark": bool(args.watermark)}},
+        "3": {"class_type": "SaveVideo",
+              "inputs": {"video": ["2", 0], "filename_prefix": args.prefix, "format": "auto"}},
+    }
+    print("⏳ 调用 H3 Regenerate → 2K（官方 API，按官方计费）...", file=sys.stderr, flush=True)
+    entry = C.run_graph(graph, timeout=args.timeout, label="Regenerate-2K")
+
+    files = C.output_path(entry)
+    if not files:
+        sys.exit(f"❌ 未找到输出视频；outputs={entry.get('outputs')}")
+    for f in files:
+        print(f"✅ 2K 成片: {f}")
+    print("\n（提示：2K 成片不能再送入 Regenerate —— 官方不接受 2K 输入）", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

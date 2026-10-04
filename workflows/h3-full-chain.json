@@ -1,0 +1,261 @@
+{
+ "id": "a066b54e-b503-41d1-ac1e-38590707945e",
+ "revision": 0,
+ "last_node_id": 4,
+ "last_link_id": 4,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "MinimaxHailuo03ContextIRNode",
+   "pos": [
+    60,
+    100
+   ],
+   "size": [
+    460,
+    380
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "first_frame",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "name": "last_frame",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    }
+   ],
+   "outputs": [
+    {
+     "name": "STRING",
+     "type": "STRING",
+     "links": [
+      2
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "MinimaxHailuo03ContextIRNode"
+   },
+   "widgets_values": [
+    "MiniMax H3",
+    "一只红狐狸在雪地里走过，镜头跟着它，冬天清晨的光线，能听到风声和踩雪的声音",
+    5,
+    "16:9"
+   ]
+  },
+  {
+   "id": 2,
+   "type": "WildH3TextToVideo",
+   "pos": [
+    600,
+    100
+   ],
+   "size": [
+    440,
+    460
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "first_frame",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "name": "last_frame",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "name": "prompt",
+     "type": "STRING",
+     "widget": {
+      "name": "prompt"
+     },
+     "link": 1
+    }
+   ],
+   "outputs": [
+    {
+     "name": "video",
+     "type": "VIDEO",
+     "links": [
+      3
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "WildH3TextToVideo"
+   },
+   "widgets_values": [
+    "(由 Context-IR 自动填入)",
+    1344,
+    768,
+    5.17,
+    6,
+    "precise",
+    42,
+    "randomize",
+    false,
+    true,
+    "",
+    ""
+   ]
+  },
+  {
+   "id": 3,
+   "type": "MinimaxHailuo03RegenerateNode",
+   "pos": [
+    1120,
+    100
+   ],
+   "size": [
+    440,
+    340
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "video",
+     "type": "VIDEO",
+     "link": 3
+    },
+    {
+     "name": "first_frame",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "name": "last_frame",
+     "type": "IMAGE",
+     "link": null,
+     "shape": 7
+    },
+    {
+     "name": "model.prompt",
+     "type": "STRING",
+     "widget": {
+      "name": "model.prompt"
+     },
+     "link": 2
+    }
+   ],
+   "outputs": [
+    {
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      4
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "MinimaxHailuo03RegenerateNode"
+   },
+   "widgets_values": [
+    "MiniMax H3",
+    "(由 Context-IR 自动填入)",
+    "2K"
+   ]
+  },
+  {
+   "id": 4,
+   "type": "SaveVideo",
+   "pos": [
+    1640,
+    150
+   ],
+   "size": [
+    400,
+    300
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "video",
+     "type": "VIDEO",
+     "link": 4
+    }
+   ],
+   "outputs": [
+    {
+     "name": "video",
+     "type": "VIDEO",
+     "links": null
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "SaveVideo"
+   },
+   "widgets_values": [
+    "h3-2k-final",
+    "auto",
+    "auto"
+   ]
+  }
+ ],
+ "links": [
+  [
+   1,
+   1,
+   0,
+   2,
+   2,
+   "STRING"
+  ],
+  [
+   2,
+   1,
+   0,
+   3,
+   3,
+   "STRING"
+  ],
+  [
+   3,
+   2,
+   0,
+   3,
+   0,
+   "VIDEO"
+  ],
+  [
+   4,
+   3,
+   0,
+   4,
+   0,
+   "VIDEO"
+  ]
+ ],
+ "groups": [],
+ "config": {},
+ "extra": {
+  "ds": {
+   "scale": 0.85,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "frontendVersion": "1.53.10"
+ },
+ "version": 0.4
+}

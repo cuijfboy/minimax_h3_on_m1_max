@@ -1,0 +1,184 @@
+{
+ "1": {
+  "class_type": "H3StructuredPrompt",
+  "inputs": {
+   "scene": "a red fox stepping out of a snowy larch forest into an open snowfield",
+   "action": "the fox walks forward slowly, leaving a trail of prints",
+   "camera": "wide establishing shot, static then a slow pan to the right",
+   "style": "photorealistic wildlife cinematography, golden winter morning light",
+   "sound": "gentle wind, distant birds, soft snow crunch",
+   "extra": ""
+  }
+ },
+ "2": {
+  "class_type": "H3StructuredPrompt",
+  "inputs": {
+   "scene": "the same snowfield, seen closer, the fox now mid-distance",
+   "action": "the fox keeps walking, ears swivelling, breath visible in the cold air",
+   "camera": "medium tracking shot, camera moves alongside the fox",
+   "style": "photorealistic wildlife cinematography, low golden sun behind the trees",
+   "sound": "soft crunch of paws on snow, light breeze",
+   "extra": ""
+  }
+ },
+ "3": {
+  "class_type": "H3StructuredPrompt",
+  "inputs": {
+   "scene": "close on the red fox, snow particles drifting past its face",
+   "action": "the fox stops and lifts its head, sniffing the air",
+   "camera": "slow push-in to a close-up",
+   "style": "photorealistic wildlife cinematography, warm rim light on the fur",
+   "sound": "quiet, still winter atmosphere",
+   "extra": ""
+  }
+ },
+ "4": {
+  "class_type": "WildH3TextToVideo",
+  "inputs": {
+   "prompt": [
+    "1",
+    0
+   ],
+   "width": 864,
+   "height": 480,
+   "seconds": 8.0,
+   "steps": 6,
+   "preset": "precise",
+   "seed": 42,
+   "token_reduction": false,
+   "ssd_streaming": true,
+   "binary_path": "",
+   "model_dir": ""
+  }
+ },
+ "5": {
+  "class_type": "WildH3TextToVideo",
+  "inputs": {
+   "prompt": [
+    "2",
+    0
+   ],
+   "width": 864,
+   "height": 480,
+   "seconds": 5.17,
+   "steps": 6,
+   "preset": "precise",
+   "seed": 43,
+   "token_reduction": false,
+   "ssd_streaming": true,
+   "binary_path": "",
+   "model_dir": "",
+   "first_frame": [
+    "7",
+    0
+   ]
+  }
+ },
+ "6": {
+  "class_type": "WildH3TextToVideo",
+  "inputs": {
+   "prompt": [
+    "3",
+    0
+   ],
+   "width": 864,
+   "height": 480,
+   "seconds": 5.17,
+   "steps": 6,
+   "preset": "precise",
+   "seed": 44,
+   "token_reduction": false,
+   "ssd_streaming": true,
+   "binary_path": "",
+   "model_dir": "",
+   "first_frame": [
+    "8",
+    0
+   ]
+  }
+ },
+ "7": {
+  "class_type": "H3LastFrame",
+  "inputs": {
+   "video": [
+    "4",
+    0
+   ]
+  }
+ },
+ "8": {
+  "class_type": "H3LastFrame",
+  "inputs": {
+   "video": [
+    "5",
+    0
+   ]
+  }
+ },
+ "9": {
+  "class_type": "ConcatenateVideo",
+  "inputs": {
+   "codec": "auto",
+   "videos.video0": [
+    "4",
+    0
+   ],
+   "videos.video1": [
+    "5",
+    0
+   ],
+   "videos.video2": [
+    "6",
+    0
+   ]
+  }
+ },
+ "10": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "filename_prefix": "shot-1",
+   "format": "auto",
+   "codec": "auto",
+   "video": [
+    "4",
+    0
+   ]
+  }
+ },
+ "11": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "filename_prefix": "shot-2",
+   "format": "auto",
+   "codec": "auto",
+   "video": [
+    "5",
+    0
+   ]
+  }
+ },
+ "12": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "filename_prefix": "shot-3",
+   "format": "auto",
+   "codec": "auto",
+   "video": [
+    "6",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "filename_prefix": "storyboard-3shot",
+   "format": "auto",
+   "codec": "auto",
+   "video": [
+    "9",
+    0
+   ]
+  }
+ }
+}

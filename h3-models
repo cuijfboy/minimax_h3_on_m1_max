@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# h3-models — 模型解析、校验与绑定
+#
+#   ./h3-models status     解析结果 + 校验 + 绑定状态
+#   ./h3-models verify     只跑校验
+#   ./h3-models bind       按 MODEL_BINDING 重建绑定
+#   ./h3-models paths      只打印解析出的路径
+
+set -euo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONF="${H3_CONF:-$REPO/h3.conf}"
+if [ -f "$CONF" ]; then
+  # shellcheck disable=SC1090
+  . "$CONF"
+fi
+
+export H3_ROOT="${H3_ROOT:-$HOME/minimax-h3}"
+export H3_MODELS_HOME="${H3_MODELS_HOME:-$HOME/minimax-h3-models}"
+export MODEL_BINDING="${MODEL_BINDING:-auto}"
+export H3_MODEL_DIR="${H3_MODEL_DIR:-}"
+export H3_TURBO_DIR="${H3_TURBO_DIR:-}"
+export COMFY_MODELS_DIR="${COMFY_MODELS_DIR:-}"
+export MODEL_SEARCH_PATHS="${MODEL_SEARCH_PATHS:-}"
+
+exec python3 "$REPO/scripts/h3_models.py" "$@"

@@ -1,0 +1,35 @@
+# h3.conf.example — 复制成 h3.conf 后按需修改
+#
+# deploy.sh 和 h3-models 都会读这个文件（先 source，再用其中的值）。
+# 所有变量都是可选的，不写就用注释里的默认值。
+
+# ── 部署目录（代码）──────────────────────────────────
+# 这里只放 ComfyUI / h3.c / h3.c-studio / 脚本，没有模型。
+# H3_ROOT="$HOME/minimax-h3"
+
+# ── 模型仓库（权重，独立于部署目录）────────────────────
+# 建议放在大容量卷上。删掉部署目录不会影响它。
+# H3_MODELS_HOME="$HOME/minimax-h3-models"
+
+# ── 已有模型的位置 ───────────────────────────────────
+# 如果你已经把模型下在别处，在这里指明，deploy.sh 就不会重复下载。
+# 留空则依次尝试：MODEL_SEARCH_PATHS 搜索 → H3_MODELS_HOME
+# H3_MODEL_DIR="/Volumes/Models/MiniMax-H3"
+# H3_TURBO_DIR="/Volumes/Models/MiniMax-H3-turbo"
+# COMFY_MODELS_DIR="/Volumes/Models/comfy"
+
+# ── 自动搜索根目录（冒号分隔）─────────────────────────
+# 脚本会在这些目录下按名字找 MiniMax-H3 / MiniMax-H3-turbo。
+# 适合「知道模型在这块盘上，但记不清具体路径」的情况。
+# MODEL_SEARCH_PATHS="/Volumes/Models:$HOME/Downloads"
+
+# ── 绑定方式 ────────────────────────────────────────
+#   auto    默认。h3 侧同时写 config.json 和符号链接（互为备份）；
+#           ComfyUI 侧只写 extra_model_paths.yaml（避免模型被列出两次）
+#   link    h3 和 ComfyUI 都用符号链接，不写 yaml。布局最自洽、工具无关
+#   config  只用配置文件，不建任何符号链接。适合只读盘
+# MODEL_BINDING="auto"
+
+# ── 行为开关 ────────────────────────────────────────
+# AUTO_DOWNLOAD_MODELS="1"   # 找不到模型时是否自动下载（约 177 GB）
+# VERIFY_MODELS="1"          # 是否按 config/models.manifest.json 校验文件

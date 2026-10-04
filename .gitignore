@@ -1,0 +1,33 @@
+# ── 模型（体积大，用 scripts/*_download.py 重新拉取）──
+models/
+*.safetensors
+*.pth
+*.gguf
+*.ckpt
+*.bin
+
+# ── 密钥 ──
+.comfy_api_key
+h3.conf
+
+# ── 部署产物 ──
+ComfyUI/
+h3.c/
+h3.c-studio/
+venv/
+.venv/
+node_modules/
+bin/
+tools/
+
+# ── 生成物 ──
+__pycache__/
+*.pyc
+output/
+outputs/
+logs/
+temp/
+
+# ── 系统 ──
+.DS_Store
+*.swp

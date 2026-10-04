@@ -1,0 +1,30 @@
+{
+ "1": {
+  "class_type": "WildH3TextToVideo",
+  "inputs": {
+   "prompt": "A red fox walks through fresh snow in a pine forest. Medium tracking shot, natural winter light, realistic fur, soft footsteps and wind.",
+   "width": 1344,
+   "height": 768,
+   "seconds": 5.17,
+   "steps": 6,
+   "preset": "precise",
+   "seed": 42,
+   "token_reduction": false,
+   "ssd_streaming": true,
+   "binary_path": "",
+   "model_dir": ""
+  }
+ },
+ "2": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "filename_prefix": "h3-local-quality",
+   "format": "auto",
+   "codec": "auto",
+   "video": [
+    "1",
+    0
+   ]
+  }
+ }
+}

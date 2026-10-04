@@ -1,0 +1,85 @@
+#!/bin/bash
+# h3gen — MiniMax H3 本地生成包装脚本（M1 Max 32GB 已验证参数固化）
+#
+# 用法:
+#   ./h3gen "提示词" [档位] [传给 h3 的额外参数]
+# 档位: smoke | draft(默认) | quality | base20 | custom
+#
+# 示例:
+#   ./h3gen "A red fox walks through fresh snow"
+#   ./h3gen "提示词" quality
+#   ./h3gen "提示词" quality --seed 42
+#   ./h3gen "$(cat prompt.txt)" quality          # 用 Context-IR 增强后的提示词
+
+set -euo pipefail
+
+ROOT="${H3_ROOT:-$HOME/minimax-h3}"
+ENGINE="$ROOT/h3.c"                      # 引擎目录（h3_shaders.metal 必须在此）
+export PATH="$ROOT/bin:$PATH"            # 提供 arm64 ffmpeg/ffprobe
+H3="$ENGINE/h3"
+MODEL_TURBO="$ROOT/models/MiniMax-H3-turbo"
+MODEL_BASE="$ROOT/models/MiniMax-H3"
+OUTDIR="$ENGINE/outputs"
+
+if [ $# -lt 1 ]; then
+  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+  exit 1
+fi
+
+PROMPT="$1"
+TIER="${2:-draft}"
+if [ $# -ge 2 ]; then shift 2; else shift 1; fi
+
+case "$TIER" in
+  smoke)   MODEL="$MODEL_TURBO"; W=512;  H=512; F=22;  S=6;  L=50; R=1 ;;
+  draft)   MODEL="$MODEL_TURBO"; W=864;  H=480; F=124; S=6;  L=50; R=1 ;;
+  quality) MODEL="$MODEL_TURBO"; W=1344; H=768; F=124; S=6;  L=50; R=1 ;;
+  base20)  MODEL="$MODEL_BASE";  W=864;  H=480; F=124; S=20; L=45; R=2 ;;
+  custom)  MODEL="$MODEL_TURBO"; W=864;  H=480; F=124; S=6;  L=50; R=1 ;;
+  *) echo "未知档位: $TIER (可选 smoke|draft|quality|base20|custom)" >&2; exit 1 ;;
+esac
+
+STAMP=$(date '+%Y%m%d-%H%M%S')
+OUT="$OUTDIR/h3-$TIER-$STAMP.mp4"
+mkdir -p "$OUTDIR"
+
+SECS=$(awk -v f="$F" 'BEGIN{printf "%.2f", f/24}')
+
+echo "──────────────────────────────────────────────"
+echo " 档位     : $TIER"
+echo " 模型     : $(basename "$MODEL")"
+echo " 画布     : ${W}x${H}   帧数: $F (${SECS}s @24fps)"
+echo " 采样     : ${S} 步 / layers $L / reuse $R / SSD 流式"
+echo " 输出     : $OUT"
+echo " 提示词   : ${PROMPT:0:120}$([ ${#PROMPT} -gt 120 ] && echo ' …')"
+echo "──────────────────────────────────────────────"
+
+START=$(date +%s)
+# 关键：必须在引擎目录下运行 —— h3 用相对路径加载 h3_shaders.metal
+cd "$ENGINE"
+set +e
+"$H3" --profile \
+  -d "$MODEL" \
+  -p "$PROMPT" \
+  --width "$W" --height "$H" --frames "$F" --steps "$S" \
+  --layers "$L" --reuse "$R" --ssd-streaming \
+  -o "$OUT" \
+  "$@"
+RC=$?
+set -e
+END=$(date +%s)
+
+echo
+echo "══════════════════════════════════════════════"
+if [ $RC -eq 0 ] && [ -f "$OUT" ]; then
+  D=$((END-START))
+  echo "✅ 生成成功  耗时 ${D} 秒 ($(printf '%d:%02d' $((D/60)) $((D%60))))"
+  echo "   产物: $OUT"
+  ffprobe -v error -show_entries stream=codec_type,codec_name,width,height,sample_rate,channels \
+          -show_entries format=duration,size -of default=noprint_wrappers=1 "$OUT" 2>/dev/null | paste -sd' ' - | sed 's/^/   /'
+else
+  echo "❌ 生成失败 (退出码 $RC)"
+  exit $RC
+fi
+echo "══════════════════════════════════════════════"
+echo "提示：送官方 2K 再生成需用原始提示词 + 未修改原片（24fps / 4-15 秒）"

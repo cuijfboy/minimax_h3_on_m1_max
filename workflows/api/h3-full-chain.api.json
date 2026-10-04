@@ -1,0 +1,58 @@
+{
+ "1": {
+  "class_type": "MinimaxHailuo03ContextIRNode",
+  "inputs": {
+   "model": "MiniMax H3",
+   "model.prompt": "一只红狐狸在雪地里走过，镜头跟着它，冬天清晨的光线，能听到风声和踩雪的声音",
+   "model.duration": 5,
+   "model.ratio": "16:9"
+  }
+ },
+ "2": {
+  "class_type": "WildH3TextToVideo",
+  "inputs": {
+   "prompt": [
+    "1",
+    0
+   ],
+   "width": 1344,
+   "height": 768,
+   "seconds": 5.17,
+   "steps": 6,
+   "preset": "precise",
+   "seed": 42,
+   "token_reduction": false,
+   "ssd_streaming": true,
+   "binary_path": "",
+   "model_dir": ""
+  }
+ },
+ "3": {
+  "class_type": "MinimaxHailuo03RegenerateNode",
+  "inputs": {
+   "model": "MiniMax H3",
+   "model.prompt": [
+    "1",
+    0
+   ],
+   "model.resolution": "2K",
+   "watermark": false,
+   "video": [
+    "2",
+    0
+   ]
+  }
+ },
+ "4": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "filename_prefix": "h3-2k-final",
+   "format": "auto",
+   "codec": "auto",
+   "video": [
+    "3",
+    0
+   ]
+  }
+ }
+}
