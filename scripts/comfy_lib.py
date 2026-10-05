@@ -4,7 +4,24 @@ import json, os, time, urllib.request, urllib.error, shutil
 from pathlib import Path
 
 BASE = os.environ.get("COMFY_HOST", "http://127.0.0.1:8188")
-ROOT = Path(os.environ.get("H3_ROOT", Path.home() / "minimax-h3"))
+def _resolve_root() -> Path:
+    """自解析根目录：环境变量 H3_ROOT > 同目录 h3.conf > 本文件上一级（仓库根）。"""
+    env = os.environ.get("H3_ROOT", "").strip()
+    if env:
+        return Path(env).expanduser()
+    root = Path(__file__).resolve().parent.parent
+    conf = root / "h3.conf"
+    if conf.is_file():
+        for line in conf.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("H3_ROOT="):
+                val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if val:
+                    return Path(val).expanduser()
+    return root
+
+
+ROOT = _resolve_root()
 KEY_FILE = ROOT / ".comfy_api_key"
 
 

@@ -9,7 +9,11 @@
 
 set -euo pipefail
 
-ROOT="${H3_ROOT:-$HOME/minimax-h3}"
+# 自解析根目录：优先 h3.conf，其次环境变量 H3_ROOT，最后取脚本所在目录的上一级
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1090
+if [ -f "$REPO_ROOT/h3.conf" ]; then . "$REPO_ROOT/h3.conf"; fi
+ROOT="${H3_ROOT:-$REPO_ROOT}"
 STUDIO="$ROOT/h3.c-studio/studio"
 export PATH="$ROOT/bin:$PATH"                 # arm64 ffmpeg/ffprobe
 export H3_ENGINE_DIR="$ROOT/h3.c-studio"      # 引擎与模型目录

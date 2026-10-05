@@ -10,7 +10,11 @@
 # 配套 CLI：./comfy-contextir（提示词增强）  ./comfy-2k（768P→2K 再生成）
 
 set -euo pipefail
-ROOT="${H3_ROOT:-$HOME/minimax-h3}"
+# 自解析根目录：优先 h3.conf，其次环境变量 H3_ROOT，最后取脚本所在目录的上一级
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1090
+if [ -f "$REPO_ROOT/h3.conf" ]; then . "$REPO_ROOT/h3.conf"; fi
+ROOT="${H3_ROOT:-$REPO_ROOT}"
 export PATH="$ROOT/bin:$PATH"
 
 if [ ! -x "$ROOT/ComfyUI/.venv/bin/python" ]; then
