@@ -144,6 +144,20 @@ stage_deps() {
       brew install "$tool" || die "安装 $tool 失败"
     fi
   done
+
+  # cli/* 与 Studio 会把 $H3_ROOT/bin 前置到 PATH，这里把 ffmpeg/ffprobe 放进去
+  mkdir -p "$H3_ROOT/bin"
+  local b
+  for b in ffmpeg ffprobe; do
+    if [ -e "$H3_ROOT/bin/$b" ]; then
+      ok "bin/$b 已就绪"
+    elif have "$b"; then
+      ln -s "$(command -v "$b")" "$H3_ROOT/bin/$b"
+      ok "bin/$b → $(command -v "$b")"
+    else
+      warn "PATH 上没有 $b，bin/$b 未创建"
+    fi
+  done
 }
 
 # ──────────────────────────────── 阶段 2：ComfyUI
@@ -193,17 +207,46 @@ stage_engine() {
 
 stage_studio() {
   hdr "H3 Studio（多镜头分镜板）"
-  if [ -d "$H3_ROOT/h3.c-studio/studio/node_modules" ]; then
-    ok "依赖已安装"
-    return
-  fi
-  if [ ! -d "$H3_ROOT/h3.c-studio" ]; then
+  local STUDIO="$H3_ROOT/h3.c-studio"
+
+  if [ ! -d "$STUDIO" ]; then
     info "clone h3.c-studio …"
-    git clone --depth 1 "$(gh_url skaiy/h3.c-studio.git)" "$H3_ROOT/h3.c-studio" \
+    git clone --depth 1 "$(gh_url skaiy/h3.c-studio.git)" "$STUDIO" \
       || die "clone 失败（网络？）"
   fi
-  info "npm install …"
-  ( cd "$H3_ROOT/h3.c-studio/studio" && npm install ) || die "npm install 失败"
+
+  # 1) 引擎：上游仓库不含 h3 二进制，必须自己编译
+  if [ -x "$STUDIO/h3" ]; then
+    ok "Studio 引擎已编译"
+  else
+    info "编译 Studio 引擎（make）…"
+    ( cd "$STUDIO" && make ) || die "编译失败。若缺编译工具：xcode-select --install"
+  fi
+
+  # 2) 32GB 机器必需：强制 --ssd-streaming（详见 patches/h3-c-studio.md）
+  python3 "$REPO/scripts/patch_studio_ssd.py" "$STUDIO/studio/server/main.py" \
+    || warn "Studio 补丁未打上 —— 分镜板生成时可能 OOM，见 patches/h3-c-studio.md"
+
+  # 3) 前端依赖
+  if [ -d "$STUDIO/studio/node_modules" ]; then
+    ok "前端依赖已安装"
+  else
+    info "npm install …"
+    ( cd "$STUDIO/studio" && npm install ) || die "npm install 失败"
+  fi
+
+  # 4) 后端依赖：早期 deploy.sh 遗漏，缺了 ./cli/h3studio 会直接报环境缺失
+  if [ -x "$STUDIO/studio/server/.venv/bin/python" ]; then
+    ok "后端依赖已安装"
+  else
+    info "创建后端 venv 并安装 fastapi / uvicorn …"
+    "$PY312" -m venv "$STUDIO/studio/server/.venv" || die "创建后端 venv 失败"
+    "$STUDIO/studio/server/.venv/bin/pip" install -q --upgrade pip
+    "$STUDIO/studio/server/.venv/bin/pip" install -q -i "$PIP_INDEX_URL" \
+      fastapi 'uvicorn[standard]' pydantic python-multipart \
+      || die "后端依赖安装失败。可换源重试：
+       PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ ./deploy.sh --stage studio"
+  fi
   ok "H3 Studio 就绪"
 }
 
