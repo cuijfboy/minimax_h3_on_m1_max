@@ -173,7 +173,8 @@ H3_ROOT  (~/minimax-h3)                   ← 纯代码，删了也不丢模型
 │   ├── 03-text-to-image.md     文生图方案
 │   ├── 04-gui-fusion.md        GUI 融合方案
 │   ├── 05-gui-fusion-phase2.md GUI 融合二期评估
-│   └── 06-model-layout.md      模型解耦与共享
+│   ├── 06-model-layout.md      模型解耦与共享
+│   └── 07-videoGen-工具链.md   清空重建部署记录（容器布局 / 补丁清单 / 验证实测）
 ├── workflows/             10 张工作流（UI 格式）+ api/（API 格式）
 ├── scripts/               工作流生成器、模型下载、校验
 ├── cli/                   h3gen / comfy-contextir / comfy-2k / start-comfyui / h3studio
