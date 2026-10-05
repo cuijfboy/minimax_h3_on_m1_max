@@ -124,16 +124,22 @@ ROOT="${H3_ROOT:-$REPO_ROOT}"
 
 落在 `cli/h3gen`、`cli/h3studio`、`cli/start-comfyui`；`scripts/comfy_lib.py` 有同款 Python 实现（供 `cli/comfy-2k` / `cli/comfy-contextir`）。
 
-### 5.3 `deploy.sh` 覆盖不到、必须补做的事项
+### 5.3 曾经的手工补做项 —— 现已全部自动化
 
-| # | 事项 | 原因 |
+这 6 项在早期部署里都是缺口（首次搭建时全靠手工完成），现已并入部署流程：
+
+| # | 事项 | 现在由谁负责 |
 |---|---|---|
-| 1 | `cd h3.c-studio && make` | 上游仓库**不含 `h3` 二进制** |
-| 2 | `studio/server/.venv`（fastapi / uvicorn / pydantic / python-multipart） | `deploy.sh` 完全没管 |
-| 3 | Studio 的 SSD 流式补丁 | 见 5.1 |
-| 4 | CLI 根目录自解析 | 见 5.2 |
-| 5 | `h3.c-studio/{MiniMax-H3,MiniMax-H3-turbo,outputs}` 软链 | Studio 的 `H3_MODEL_DIR` 默认是 `H3_ENGINE_DIR/MiniMax-H3` |
-| 6 | `bin/{ffmpeg,ffprobe}` 软链 | `h3gen` / Studio 依赖 `$ROOT/bin` 在 PATH 上 |
+| 1 | `cd h3.c-studio && make`（上游不含 `h3` 二进制） | `deploy.sh --stage studio` |
+| 2 | Studio 后端 venv（fastapi / uvicorn / pydantic / python-multipart） | `deploy.sh --stage studio` |
+| 3 | Studio 的 `--ssd-streaming` 补丁（见 5.1） | `scripts/patch_studio_ssd.py`，由 `--stage studio` 调用（幂等） |
+| 4 | CLI 根目录自解析（见 5.2） | 已在源码中修复 |
+| 5 | `h3.c-studio/{MiniMax-H3,MiniMax-H3-turbo,outputs}` 软链 | `./h3-models bind`（`--stage workflows` 调用） |
+| 6 | `bin/{ffmpeg,ffprobe}` 软链 | `deploy.sh --stage deps` |
+
+**端到端验证**：删掉 `h3.c-studio/h3`、`studio/server/.venv`、`bin/ffprobe`、
+`h3.c-studio/MiniMax-H3-turbo` 后执行 `./deploy.sh --stage deps,studio,workflows`，
+四项全部自动重建，服务恢复正常。
 
 ---
 

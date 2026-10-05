@@ -2,8 +2,11 @@
 
 上游：https://github.com/skaiy/h3.c-studio
 
-本仓库**不包含** Studio 的代码，需要自行 clone 上游。下面这一处补丁
-`deploy.sh` **不会**自动打，必须单独处理。
+本仓库**不包含** Studio 的代码，需要自行 clone 上游。
+
+下面这一处补丁由 [`scripts/patch_studio_ssd.py`](../scripts/patch_studio_ssd.py) 负责打上，
+`./deploy.sh --stage studio` 会自动调用（幂等，重复执行不会重复插入）。
+文末保留了手工做法，供排查问题时对照。
 
 ---
 
@@ -76,11 +79,22 @@ PY
 
 ---
 
-## deploy.sh 覆盖不到的其他几件事
+## 本补丁现在会被自动应用
 
-Studio 相关还有两件 `deploy.sh` 不管、必须手工做的事：
+`./deploy.sh --stage studio` 一步做完 Studio 的全部准备（全部幂等）：
 
-1. **编译引擎**：上游仓库不含 `h3` 二进制，需要 `cd h3.c-studio && make`。
-2. **后端依赖**：`studio/server/.venv`（`fastapi` / `uvicorn[standard]` /
-   `pydantic` / `python-multipart`）不会被自动创建，
-   否则 `./cli/h3studio` 会直接报环境缺失。
+1. **clone** 上游（若缺失）
+2. **编译引擎** —— 上游仓库不含 `h3` 二进制，脚本执行 `make`
+3. **打本补丁** —— 调用 `scripts/patch_studio_ssd.py`
+4. **前端依赖** —— `npm install`
+5. **后端依赖** —— 创建 `studio/server/.venv` 并安装
+   `fastapi` / `uvicorn[standard]` / `pydantic` / `python-multipart`
+   （早期版本漏掉这一步，会导致 `./cli/h3studio` 直接报环境缺失）
+
+模型与输出目录的软链由 `./h3-models bind` 负责（`--stage workflows` 会调用）：
+
+~~~bash
+h3.c-studio/MiniMax-H3        -> 权重仓库的 MiniMax-H3
+h3.c-studio/MiniMax-H3-turbo  -> 权重仓库的 MiniMax-H3-turbo
+h3.c-studio/outputs           -> h3.c/outputs
+~~~

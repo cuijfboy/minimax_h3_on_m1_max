@@ -1123,6 +1123,10 @@ cd studio/server && /opt/homebrew/bin/python3.12 -m venv .venv
 cd .. && npm install
 ~~~
 
+> **以上步骤现在可以一键完成**：`./deploy.sh --stage studio` 会自动
+> clone → `make` → 建模型软链 → 打 `--ssd-streaming` 补丁 → `npm install`
+> → 创建后端 venv。手工路径保留在此，供排查问题时逐步对照。
+
 **两个实测坑**：
 
 | 坑 | 现象 | 解决 |
