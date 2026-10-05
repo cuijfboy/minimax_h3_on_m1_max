@@ -131,25 +131,48 @@ def bind_h3_config(turbo_dir, model_dir):
     return True, str(node / "config.json")
 
 
+def make_link(link: Path, target) -> list:
+    """建一条符号链接；已存在且指向同一处则跳过。返回 [(路径, 状态)]。"""
+    tgt = Path(target)
+    if link.is_symlink():
+        if link.resolve() == tgt.resolve():
+            return [(str(link), "已存在")]
+        link.unlink()
+    elif link.exists():
+        return [(str(link), "已存在实体，跳过（避免覆盖）")]
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(tgt)
+    return [(str(link), "已创建")]
+
+
 def bind_h3_link(turbo_dir, model_dir):
     """在 H3_ROOT/models/ 下建符号链接，让标准布局自洽。"""
     link_root = H3_ROOT / "models"
     link_root.mkdir(parents=True, exist_ok=True)
     made = []
     for name, target in (("MiniMax-H3", model_dir), ("MiniMax-H3-turbo", turbo_dir)):
-        if not target:
-            continue
-        link = link_root / name
-        if link.is_symlink():
-            if link.resolve() == Path(target).resolve():
-                made.append((str(link), "已存在"))
-                continue
-            link.unlink()
-        elif link.exists():
-            made.append((str(link), "已存在实体目录，跳过"))
-            continue
-        link.symlink_to(target)
-        made.append((str(link), "已创建"))
+        if target:
+            made.extend(make_link(link_root / name, target))
+    return True, made
+
+
+def bind_studio_link(turbo_dir, model_dir):
+    """在 h3.c-studio/ 下建模型与输出链接。
+
+    Studio 按 H3_ENGINE_DIR 下的同名目录找模型，并且靠
+    <引擎>/MiniMax-H3-turbo 是否存在来决定「Turbo」开关是否生效，
+    所以这两条链接无法用环境变量替代。
+    """
+    engine = H3_ROOT / "h3.c-studio"
+    if not engine.is_dir():
+        return True, []
+    made = []
+    for name, target in (("MiniMax-H3", model_dir), ("MiniMax-H3-turbo", turbo_dir)):
+        if target:
+            made.extend(make_link(engine / name, target))
+    outputs = H3_ROOT / "h3.c" / "outputs"
+    outputs.mkdir(parents=True, exist_ok=True)
+    made.extend(make_link(engine / "outputs", outputs))
     return True, made
 
 
@@ -197,6 +220,9 @@ def do_bind(model_dir, turbo_dir, comfy_dir):
         report.append(("h3  链接", *bind_h3_link(turbo_dir, model_dir)))
     if BINDING in ("auto", "config") and turbo_dir:
         report.append(("h3  配置", *bind_h3_config(turbo_dir, model_dir)))
+    if turbo_dir:
+        # Studio 侧没有配置文件机制，无论哪种绑定模式都要建链接
+        report.append(("ST  链接", *bind_studio_link(turbo_dir, model_dir)))
     if comfy_dir:
         if BINDING == "link":
             report.append(("CF  链接", *bind_comfy_link(comfy_dir)))
@@ -276,6 +302,16 @@ def cmd_status():
             print(f"h3  链接   models/{name:24s} {state} → {os.readlink(link)}")
         else:
             print(f"h3  链接   models/{name:24s} （未创建）")
+
+    studio = H3_ROOT / "h3.c-studio"
+    if studio.is_dir():
+        for name in ("MiniMax-H3", "MiniMax-H3-turbo", "outputs"):
+            link = studio / name
+            if link.is_symlink():
+                state = "✅" if link.exists() else "❌ 悬空"
+                print(f"ST  链接   h3.c-studio/{name:20s} {state} → {os.readlink(link)}")
+            else:
+                print(f"ST  链接   h3.c-studio/{name:20s} （未创建）")
 
     yml = H3_ROOT / "ComfyUI/extra_model_paths.yaml"
     print(f"CF  配置   extra_model_paths.yaml                 "
