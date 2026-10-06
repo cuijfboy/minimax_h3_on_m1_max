@@ -176,6 +176,43 @@ ROOT="${H3_ROOT:-$REPO_ROOT}"
 
 > 旧部署 `/Users/jeffrey/temp/comfyui` 的服务已停止；其模型路径仍通过反向软链指向 `videoGen/models`。
 
+### 7.1 服务生命周期（实测踩过的坑）
+
+**服务不会自动随开机或会话启动**，进程消失后要手动拉起来：
+
+```bash
+cd /Users/jeffrey/temp/videoGen/minimax_h3_on_m1_max
+./cli/start-comfyui     # 前台运行，Ctrl+C 停止
+./cli/h3studio          # 同上，同时拉起前端与后端
+```
+
+想让它脱离终端长期运行：
+
+```bash
+nohup ./cli/start-comfyui > logs/comfyui.log 2>&1 &
+nohup ./cli/h3studio      > logs/studio.log  2>&1 &
+```
+
+一键体检：
+
+```bash
+for p in 8188 3000 8765; do
+  lsof -nP -iTCP:$p -sTCP:LISTEN >/dev/null && echo "$p OK" || echo "$p 需要重启"
+done
+```
+
+**注意 `cli/h3studio` 走的是 `npm run dev`（`scripts/dev.js`）**：它同时拉起
+vite(:3000) 与 uvicorn(:8765)，并且**子进程被杀后父进程会重新拉起**
+（实测：只杀 vite，父进程会在 :3001 上重生一个，形成幽灵服务）。
+要真正停掉 Studio，停父进程：
+
+```bash
+pkill -f "scripts/dev.js"
+```
+
+日志位置：`logs/comfyui.log`、`logs/studio.log`；出图记录在 `ComfyUI/output/`。
+本机这两个服务目前以**脱离会话**方式运行（PPID=1），关掉终端不影响它们。
+
 ---
 
 ## 8. 验证记录（2026-10-05 清空重建后实测）
